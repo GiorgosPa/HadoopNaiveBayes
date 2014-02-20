@@ -111,12 +111,10 @@ public class HadoopNB extends Configured implements Tool {
         return 0;
     }
 
-    public void classify(FileSystem fs, Configuration conf, Path path) {
-        String[] featureSet = {"age", "workclass", "fnlwgt", "education", "education-num",
-            "marital-status", "occupation", "relationship", "race",
-            "sex", "capital-gain", "capital-loss", "hours-per-week", "native-country", "class"
-        };
-        int[] indexes = {0, 2, 4, 10, 11, 12};
+    public void classify(FileSystem fs, Configuration conf, Path path) {       
+        String features =  {"age", "fnlwgt", "education-num", "capital-gain", 
+                            "capital-loss", "hours-per-week"}
+        int[] indexes = {0, 2, 4, 10, 11, 12};        
 
         HashMap<String, Integer> modelFrequencies = readModel(fs, conf);
 
@@ -144,15 +142,15 @@ public class HadoopNB extends Configured implements Tool {
             //System.out.println(line);
             
             while (line != null && !line.equals("")) {
-                String[] features = line.split(",");
+                String[] values = line.split(",");
                 long[] l = new long[6];
                 int[] bucket = new int[6];
 
                 for (int i = 0; i < 6; i++) {
                     try{
-                        l[i] = Long.parseLong(features[indexes[i]].trim());
-                        long max = Long.parseLong(minmax.get(featureSet[indexes[i]]).split(",")[1]);
-                        long min = Long.parseLong(minmax.get(featureSet[indexes[i]]).split(",")[0]);
+                        l[i] = Long.parseLong(values[indexes[i]].trim());
+                        long max = Long.parseLong(minmax.get(features[i]).split(",")[1]);
+                        long min = Long.parseLong(minmax.get(features[i]).split(",")[0]);
                         long bucketSize = (max - min) / 10;
                         bucket[i] = (int) ((l[i] - min) / bucketSize);
                         
@@ -173,17 +171,17 @@ public class HadoopNB extends Configured implements Tool {
                     }
                 }
 
-                String[] positiveKeys = new String[features.length];
-                String[] negativeKeys = new String[features.length];
+                String[] positiveKeys = new String[values.length];
+                String[] negativeKeys = new String[values.length];
 
                 //featurename+class+value;
-                for (int i = 0; i < features.length - 1; i++) {
-                    if (contains(indexes, i) >= 0) {
-                        positiveKeys[i] = featureSet[i] + ", >50K," + bucket[contains(indexes, i)];
-                        negativeKeys[i] = featureSet[i] + ", <=50K," + bucket[contains(indexes, i)];
+                for (int i = 0; i < values.length - 1; i++) {
+                    if (contains(indexes, i)) {
+                        positiveKeys[i] = featureSet[i] + ", >50K," + bucket[i];
+                        negativeKeys[i] = featureSet[i] + ", <=50K," + bucket[i];
                     } else {
-                        positiveKeys[i] = featureSet[i] + ", >50K," + features[i];
-                        negativeKeys[i] = featureSet[i] + ", <=50K," + features[i];
+                        positiveKeys[i] = featureSet[i] + ", >50K," + values[i];
+                        negativeKeys[i] = featureSet[i] + ", <=50K," + values[i];
                     }
                 }
 
@@ -245,10 +243,10 @@ public class HadoopNB extends Configured implements Tool {
     private static int contains(int[] array, int value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {
-                return i;
+                return true;
             }
         }
-        return -1;
+        return false;
     }
 
     public HashMap<String, Integer> readModel(FileSystem fs, Configuration conf) {
