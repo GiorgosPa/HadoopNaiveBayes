@@ -7,4 +7,4 @@ HadoopNaiveBayes
  Second Phase Map-Reduce: Training Classifier
 
 
- This is a class project for the course 'Machine Learning' at Athens University of Economics and Business.
+ This is a class project for the 'Machine Learning' course at Athens University of Economics and Business.
